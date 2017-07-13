@@ -5,9 +5,15 @@ import {
   Router,
   RouterStateSnapshot,
   RoutesRecognized,
+  NavigationEnd,
+  Event
 } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { of } from 'rxjs/observable/of';
+import { filter } from 'rxjs/operator/filter';
+import { withLatestFrom } from 'rxjs/operator/withLatestFrom';
+import { mergeMap } from 'rxjs/operator/mergeMap';
+import { map } from 'rxjs/operator/map';
 
 /**
  * An action dispatched when the router navigates.
@@ -172,8 +178,14 @@ export class StoreRouterConnectingModule {
   }
 
   private setUpStoreStateListener(): void {
-    this.store.subscribe(s => {
-      this.storeState = s;
+    const navigationEnd$ = filter.call(this.router.events, (event: Event) => event instanceof NavigationEnd);
+    const navigationEndUrl$ = map.call(navigationEnd$, () => this.router.url);
+
+    const routerReducer$ = filter.call(this.store.select(s => s.routerReducer), Boolean);
+    const storeAndRouter$ = mergeMap.call(navigationEndUrl$, () => routerReducer$);
+
+    storeAndRouter$.subscribe((rs: any) => {
+      this.storeState = rs;
       this.navigateIfNeeded();
     });
   }
@@ -193,17 +205,17 @@ export class StoreRouterConnectingModule {
   }
 
   private shouldDispatch(): boolean {
-    if (!this.storeState['routerReducer']) return true;
+    if (!this.storeState) return true;
     return !this.navigationTriggeredByDispatch;
   }
 
   private navigateIfNeeded(): void {
-    if (!this.storeState['routerReducer']) return;
+    if (!this.storeState) return;
     if (this.dispatchTriggeredByRouter) return;
 
-    if (this.router.url !== this.storeState['routerReducer'].state.url) {
+    if (this.router.url !== this.storeState.state.url) {
       this.navigationTriggeredByDispatch = true;
-      this.router.navigateByUrl(this.storeState['routerReducer'].state.url);
+      this.router.navigateByUrl(this.storeState.state.url);
     }
   }
 
