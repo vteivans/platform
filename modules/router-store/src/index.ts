@@ -13,3 +13,9 @@ export {
   RouterNavigationPayload,
   StoreRouterConnectingModule,
 } from './router_store_module';
+
+export {
+  RouterStateSerializer,
+  RouterStateSnapshotType,
+  DefaultRouterStateSerializer,
+} from './serializer';

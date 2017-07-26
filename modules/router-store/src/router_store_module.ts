@@ -8,7 +8,10 @@ import {
 } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { of } from 'rxjs/observable/of';
-
+import {
+  DefaultRouterStateSerializer,
+  RouterStateSerializer,
+} from './serializer';
 /**
  * An action dispatched when the router navigates.
  */
@@ -133,7 +136,7 @@ export function routerReducer(
  *   declarations: [AppCmp, SimpleCmp],
  *   imports: [
  *     BrowserModule,
- *     StoreModule.provideStore(mapOfReducers),
+ *     StoreModule.forRoot(mapOfReducers),
  *     RouterModule.forRoot([
  *       { path: '', component: SimpleCmp },
  *       { path: 'next', component: SimpleCmp }
@@ -146,16 +149,27 @@ export function routerReducer(
  * }
  * ```
  */
-@NgModule({})
+@NgModule({
+  providers: [
+    { provide: RouterStateSerializer, useClass: DefaultRouterStateSerializer },
+  ],
+})
 export class StoreRouterConnectingModule {
-  private routerState: RouterStateSnapshot | null = null;
+  private routerState:
+    | RouterStateSnapshot
+    | Partial<RouterStateSnapshot>
+    | null = null;
   private storeState: any;
   private lastRoutesRecognized: RoutesRecognized;
 
   private dispatchTriggeredByRouter: boolean = false; // used only in dev mode in combination with routerReducer
   private navigationTriggeredByDispatch: boolean = false; // used only in dev mode in combination with routerReducer
 
-  constructor(private store: Store<any>, private router: Router) {
+  constructor(
+    private store: Store<any>,
+    private router: Router,
+    private serializer: RouterStateSerializer
+  ) {
     this.setUpBeforePreactivationHook();
     this.setUpStoreStateListener();
     this.setUpStateRollbackEvents();
@@ -165,7 +179,7 @@ export class StoreRouterConnectingModule {
     (<any>this.router).hooks.beforePreactivation = (
       routerState: RouterStateSnapshot
     ) => {
-      this.routerState = routerState;
+      this.routerState = this.serializer.serialize(routerState);
       if (this.shouldDispatchRouterNavigation())
         this.dispatchRouterNavigation();
       return of(true);
@@ -209,7 +223,12 @@ export class StoreRouterConnectingModule {
   private dispatchRouterNavigation(): void {
     this.dispatchRouterAction(ROUTER_NAVIGATION, {
       routerState: this.routerState,
-      event: this.lastRoutesRecognized,
+      event: {
+        id: this.lastRoutesRecognized.id,
+        url: this.lastRoutesRecognized.url,
+        urlAfterRedirects: this.lastRoutesRecognized.urlAfterRedirects,
+        state: this.serializer.serialize(this.routerState),
+      } as RoutesRecognized,
     });
   }
 

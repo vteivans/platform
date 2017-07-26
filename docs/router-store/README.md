@@ -46,3 +46,6 @@ import { App } from './app.component';
 })
 export class AppModule { }
 ```
+
+## API Documentation
+- [Custom Router State Serializer](./api.md#custom-router-state-serializer)
