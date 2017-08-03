@@ -116,10 +116,6 @@ export class StoreDevtoolsModule {
           deps: [StoreDevtools],
           useFactory: createStateObservable,
         },
-        {
-          provide: ReducerManagerDispatcher,
-          useExisting: DevtoolsDispatcher,
-        },
       ],
     };
   }

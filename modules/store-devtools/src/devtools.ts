@@ -26,12 +26,24 @@ import * as Actions from './actions';
 import { StoreDevtoolsConfig, STORE_DEVTOOLS_CONFIG } from './config';
 
 @Injectable()
-export class DevtoolsDispatcher extends ActionsSubject {}
+export class DevtoolsDispatcher extends ActionsSubject implements OnDestroy {
+  constructor() {
+    super();
+  }
+
+  complete() {
+    /** */
+  }
+
+  ngOnDestroy() {
+    super.complete();
+  }
+}
 
 @Injectable()
 export class StoreDevtools implements Observer<any> {
   private stateSubscription: Subscription;
-  public dispatcher: ActionsSubject;
+  public dispatcher: DevtoolsDispatcher;
   public liftedState: Observable<LiftedState>;
   public state: Observable<any>;
 
