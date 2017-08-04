@@ -46,6 +46,7 @@ export class ReducerManager extends BehaviorSubject<ActionReducer<any, any>>
             initialState
           );
 
+    this.addInitialState(key, initialState);
     this.addReducer(key, reducer);
   }
 
@@ -63,6 +64,10 @@ export class ReducerManager extends BehaviorSubject<ActionReducer<any, any>>
     this.reducers = omit(this.reducers, key);
 
     this.updateReducers();
+  }
+
+  addInitialState(key: string, initialState: any) {
+    this.initialState = { ...this.initialState, [key]: initialState };
   }
 
   private updateReducers() {
